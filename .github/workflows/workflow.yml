@@ -7,6 +7,9 @@ on:
 
 jobs:
   pre-commit:
+    name: Run Pre-Commit in repo
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Install Tflint
@@ -49,7 +52,7 @@ jobs:
   terraform:
     needs:
       - "pre-commit"
-    name: "Terraform"
+    name: Terraform Plan
     runs-on: ubuntu-latest
     env:
       TF_VAR_username: ${{ github.actor }}
