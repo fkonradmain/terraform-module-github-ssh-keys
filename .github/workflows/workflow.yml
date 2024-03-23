@@ -13,13 +13,12 @@ on:
 
 jobs:
   pre-commit:
-    name: Run Pre-Commit in repo
+    name: Pre-Commit
     permissions:
       contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Install Tflint
-        # TODO: cache tflint install
         # yamllint disable rule:line-length
         # prettier-ignore
         run: curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
@@ -50,10 +49,8 @@ jobs:
           cache: "pip" # caching pip dependencies
       # Install requirements.txt. The install should now only
       # proceed once if caching works.
-      - run: pip install -r requirements.txt
-      - run: ls -lAh # debug
-      - run: ls -lAh * # debug
-        #version: 1.0
+      # - run: pip install -r requirements.txt
+      # version: 1.0
       - uses: pre-commit/action@v3.0.1
   terraform:
     needs:
@@ -65,7 +62,6 @@ jobs:
     permissions:
       actions: read
       contents: read
-      security-events: write # TODO: this probably isnt it. Delete later
     environment: production
 
     # Use the Bash shell regardless whether the GitHub Actions runner is
