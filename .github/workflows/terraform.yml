@@ -98,7 +98,14 @@ jobs:
       - name: Terraform Format
         run: terraform fmt -check
 
+      # Validate Terraform
+      - name: Terraform Validate
+        run: terraform validate
+
       # Generates an execution plan for Terraform
+      # This command is masked, because we do not want to have ssh
+      # public keys flying around here all the time.
+      # TODO: since we mask this here, we should replace it with a test.
       - name: Terraform Plan
         run: |
           terraform plan -input=false | while IFS= read -r line; do
