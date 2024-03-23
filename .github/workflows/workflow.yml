@@ -59,7 +59,7 @@ jobs:
     permissions:
       actions: read
       contents: read
-      # security-events: write TODO: when it fails again, also enable this
+      security-events: write # TODO: this probably isnt it. Delete later
     environment: production
 
     # Use the Bash shell regardless whether the GitHub Actions runner is
