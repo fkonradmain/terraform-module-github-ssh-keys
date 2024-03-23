@@ -57,12 +57,13 @@ jobs:
         run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin ${{ steps.trivy-latest-version.outputs.trivy_latest_version }}
         # yamllint enable rule:line-length
 
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v5
         with:
           python-version: "3.9"
           cache: "pip" # caching pip dependencies
-      # Install checkov with pip - setup-python claims it is auto caching this
-      - run: pip install checkov
+      # Install requirements.txt. The install should now only
+      # proceed once if caching works.
+      - run: pip install -r requirements.txt
         #version: 1.0
-      - uses: actions/checkout@v3
       - uses: pre-commit/action@v3.0.1
