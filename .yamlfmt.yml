@@ -1,5 +1,7 @@
 line_ending: lf
 gitignore_excludes: true
+exclude:
+  - .github/workflows/pre-commit.yml
 formatter:
   type: basic
   retain_line_breaks_single: true
