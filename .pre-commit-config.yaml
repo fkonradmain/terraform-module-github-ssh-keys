@@ -1,0 +1,76 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+exclude: ^(ansible/roles\.galaxy/|\.venv/|node_modules/)
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: destroyed-symlinks
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      - id: detect-private-key
+      - id: no-commit-to-branch
+      - id: check-json
+      - id: pretty-format-json
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: remove-tabs
+      - id: remove-crlf
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
+    hooks:
+      - id: markdownlint-fix
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: ["-c=.yamllint.yml"]
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.11.0
+    hooks:
+      - id: yamlfmt
+        args: ["-conf=./.yamlfmt.yml"]
+  - repo: https://github.com/robertdebock/pre-commit
+    rev: v1.5.2
+    hooks:
+      - id: ansible_role_find_unused_variable
+      - id: ansible_role_find_empty_files
+      - id: ansible_role_find_empty_directories
+      - id: ansible_role_find_undefined_handlers
+      - id: ansible_role_find_unquoted_values
+      - id: ansible_role_find_horizontal_when
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
+    hooks:
+      - id: markdownlint-fix
+  - repo: https://github.com/syntaqx/git-hooks
+    rev: v0.0.18
+    hooks:
+      - id: forbid-binary
+      - id: shfmt
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.88.3
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_tflint
+        args: ["--hook-config=--parallelism-ci-cpu-cores=2", "--args=--fix"]
+      - id: terraform_validate
+      - id: terraform_providers_lock
+      - id: terraform_checkov
+      - id: terraform_trivy
+        args: ["--hook-config=--parallelism-ci-cpu-cores=2"]
