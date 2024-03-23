@@ -1,15 +1,11 @@
 name: Github Push Workflow
 
-# TODO: check, if we actually need the file wide permission definition.
-permissions:
-  actions: read
-  contents: read
-  security-events: read
-
 on:
   push:
     branches: ["*"]
 # TODO: add a timer for a weekly tfsec run
+# TODO: unfortunately, adding additional workflow files will cause checkov
+# TODO: to fail.
 
 jobs:
   pre-commit:
