@@ -19,13 +19,6 @@ jobs:
         run: curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
         # yamllint enable rule:line-length
 
-      # Get Date for the Trivy cache key
-      - name: Get Date
-        id: get-date
-        run: |
-          echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-        shell: bash
-
       # Get the latest Trivy version for the Trivy cache key
       - name: Get latest Trivy version
         id: trivy-latest-version
@@ -39,23 +32,32 @@ jobs:
         # Cache Trivy with its latest version and with the date
         # manual: https://github.com/actions/cache#usage
       - name: Load cached Trivy binary
-        id: cache-trivy-binary
+        id: retrieve-cache-trivy-binary
         uses: actions/cache@v4
         with:
           path: /usr/local/bin/trivy
-          # key: trivy-binary # TODO: This is supposed to be some highly
-          # complicated search and cache string
           # yamllint disable rule:line-length
           # prettier-ignore
-          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ steps.trivy-latest-version.outputs.trivy_latest_version }}
+          key: ${{ runner.os }}-${{ steps.trivy-latest-version.outputs.trivy_latest_version }}
           # yamllint enable rule:line-length
 
       - name: Install Trivy if it was not found in cache
-        if: steps.cache-trivy-binary.outputs.cache-hit != 'true'
+        if: steps.retrieve-cache-trivy-binary.outputs.cache-hit != 'true'
         # yamllint disable rule:line-length
         # prettier-ignore
         run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin ${{ steps.trivy-latest-version.outputs.trivy_latest_version }}
         # yamllint enable rule:line-length
+
+      - name: Store Trivy binary in Cache
+        id: store-cache-trivy-binary
+        if: steps.retrieve-cache-trivy-binary.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/trivy
+          # yamllint disable rule:line-length
+          # prettier-ignore
+          key: ${{ runner.os }}-${{ steps.trivy-latest-version.outputs.trivy_latest_version }}
+          # yamllint enable rule:line-length
 
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v5
