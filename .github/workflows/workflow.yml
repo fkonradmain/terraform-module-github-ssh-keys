@@ -1,5 +1,9 @@
 name: Github Push Workflow
 
+# we have to set this global permission here in order for checkov to succeed
+permissions:
+  contents: read
+
 on:
   push:
     branches: ["*"]
