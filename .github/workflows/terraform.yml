@@ -45,7 +45,7 @@
 name: 'Terraform'
 
 env:
-  - TF_VAR_username: ${{ github.actor }}
+  TF_VAR_username: ${{ github.actor }}
 
 on:
   push:
