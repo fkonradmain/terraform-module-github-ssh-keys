@@ -1,0 +1,146 @@
+name: Github Push Workflow
+
+# we have to set this global permission here in order for checkov to succeed
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: ["*"]
+# TODO: add a timer for a weekly tfsec run
+# TODO: unfortunately, adding additional workflow files will cause checkov
+# TODO: to fail.
+
+jobs:
+  pre-commit:
+    name: Pre-Commit
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Tflint
+        # yamllint disable rule:line-length
+        # prettier-ignore
+        run: curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+        # yamllint enable rule:line-length
+
+      # Get the latest Trivy version
+      - name: Get latest Trivy version
+        id: trivy-latest-version
+        run: |
+          echo "trivy_latest_version=$( \
+          curl -s -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/aquasecurity/trivy/releases/latest \
+          | jq -r '.tag_name')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Install Trivy
+        # yamllint disable rule:line-length
+        # prettier-ignore
+        run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin ${{ steps.trivy-latest-version.outputs.trivy_latest_version }}
+        # yamllint enable rule:line-length
+
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ">=3.12"
+          cache: "pip" # caching pip dependencies
+      # Install requirements.txt. The install should now only
+      # proceed once if caching works.
+      - run: pip install -r requirements.txt
+      - uses: pre-commit/action@v3.0.1
+  terraform:
+    needs:
+      - "pre-commit"
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_username: ${{ github.actor }}
+    permissions:
+      actions: read
+      contents: read
+    environment: production
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is
+    # ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Install the latest version of Terraform CLI and configure the
+      # Terraform CLI configuration file with a Terraform Cloud user API token
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+      #  with:
+      #    cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      # Initialize a new or existing Terraform working directory by creating
+      # initial files, loading any remote state, downloading modules, etc.
+      - name: Terraform Init
+        run: terraform init
+
+      # Checks that all Terraform configuration files adhere to a
+      # canonical format
+      - name: Terraform Format
+        run: terraform fmt -check
+
+      # Validate Terraform
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Generates an execution plan for Terraform
+      # This command is masked, because we do not want to have ssh
+      # public keys flying around here all the time.
+      # TODO: since we mask this here, we should replace it with a test.
+      - name: Terraform Plan
+        run: |
+          terraform plan -input=false | while IFS= read -r line; do
+            if [ -n "$line" ]; then
+              echo "::add-mask::$line"
+            else
+              echo "$line"
+            fi
+          done
+
+        # On push to "master", build or change infrastructure
+        # according to Terraform configuration files
+        # Note: It is recommended to set up a required "strict" status
+        # check in your repository for "Terraform Cloud". See the
+        # documentation on "strict" required status checks for more
+        # information:
+        # https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
+    # - name: Terraform Apply
+    #   if: github.ref == 'refs/heads/"master"' && github.event_name == 'push'
+    #   run: terraform apply -auto-approve -input=false
+
+  tfsec:
+    needs:
+      - "pre-commit"
+    name: Run tfsec sarif report
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v3
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-sarif-action@21ded20e8ca120cd9d3d6ab04ef746477542a608
+        with:
+          sarif_file: tfsec.sarif
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          # Path to SARIF file relative to the root of the repository
+          sarif_file: tfsec.sarif
