@@ -11,6 +11,9 @@ rules:
     level: error
   comments:
     min-spaces-from-content: 1
+  line-length:
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
 ignore: |
   .tox/
   .cache/
