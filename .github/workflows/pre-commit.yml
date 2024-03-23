@@ -29,35 +29,12 @@ jobs:
           | jq -r '.tag_name')" >> $GITHUB_OUTPUT
         shell: bash
 
-        # Cache Trivy with its latest version and with the date
-        # manual: https://github.com/actions/cache#usage
-      - name: Load cached Trivy binary
-        id: retrieve-cache-trivy-binary
-        uses: actions/cache@v4
-        with:
-          path: /usr/local/bin/trivy
-          # yamllint disable rule:line-length
-          # prettier-ignore
-          key: ${{ runner.os }}-${{ steps.trivy-latest-version.outputs.trivy_latest_version }}
-          # yamllint enable rule:line-length
-
       - name: Install Trivy if it was not found in cache
         if: steps.retrieve-cache-trivy-binary.outputs.cache-hit != 'true'
         # yamllint disable rule:line-length
         # prettier-ignore
         run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin ${{ steps.trivy-latest-version.outputs.trivy_latest_version }}
         # yamllint enable rule:line-length
-
-      - name: Store Trivy binary in Cache
-        id: store-cache-trivy-binary
-        if: steps.retrieve-cache-trivy-binary.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
-        with:
-          path: /usr/local/bin/trivy
-          # yamllint disable rule:line-length
-          # prettier-ignore
-          key: ${{ runner.os }}-${{ steps.trivy-latest-version.outputs.trivy_latest_version }}
-          # yamllint enable rule:line-length
 
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v5
@@ -67,5 +44,6 @@ jobs:
       # Install requirements.txt. The install should now only
       # proceed once if caching works.
       - run: pip install -r requirements.txt
+      - run: ls -lAh # debug
         #version: 1.0
       - uses: pre-commit/action@v3.0.1
